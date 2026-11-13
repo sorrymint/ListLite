@@ -23,6 +23,8 @@ npm run dev              # http://localhost:5173
 ```
 
 Never put a Supabase secret or service-role key in `.env`; only the URL and publishable key belong there.
+If you already have a `.env` from an earlier version, rename `PUBLIC_SUPABASE_URL` to `SUPABASE_URL` and
+`PUBLIC_SUPABASE_PUBLISHABLE_KEY` to `SUPABASE_PUBLISHABLE_KEY`.
 Studio (database UI) is at <http://127.0.0.1:54323> and Mailpit (test email) at <http://127.0.0.1:54324>.
 Stop the stack with `npx supabase stop`. The stack exposes dev services to your network, so avoid untrusted networks.
 
@@ -65,7 +67,8 @@ Tests are in `supabase/tests`. Supabase Auth owns `auth.users`; a trigger create
 Local and hosted projects have separate users and data. For a hosted project:
 
 1. Apply the migrations to it. Do not apply the seed.
-2. Set `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_PUBLISHABLE_KEY` in the deployment provider.
+2. Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in the deployment provider. The Vercel Supabase
+   integration provides these names automatically.
 3. Set the Auth site URL and allow-list `https://your-app-domain/auth/callback`.
 
 ## Web UI Implementation
@@ -110,6 +113,6 @@ npm run dev
 ✓ List detail page (tasks, members, invitations)  
 ✓ Invitation acceptance flow  
 ✓ Member management (view, remove)  
-✓ Full API backend (create, read, update, delete)  
+✓ Full API backend (create, read, update, delete)
 
 See IMPLEMENTATION.md for complete architecture documentation.

@@ -1,3 +1,4 @@
+// TODO replace deprecated json with new Response.JSON
 import { json, error } from '@sveltejs/kit';
 import { randomBytes } from 'crypto';
 import type { RequestHandler } from './$types';

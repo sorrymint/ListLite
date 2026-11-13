@@ -7,8 +7,8 @@ import { POST as createInvitationHandler } from '../../src/routes/api/lists/[id]
 import { POST as acceptInvitationHandler } from '../../src/routes/api/invite/[token]/+server';
 import { load as loadInvitation } from '../../src/routes/invite/[token]/+page.server';
 
-const url = process.env.PUBLIC_SUPABASE_URL!;
-const key = process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+const url = process.env.SUPABASE_URL!;
+const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
 const password = 'litelist-dev-only-password';
 
 const newClient = () =>
