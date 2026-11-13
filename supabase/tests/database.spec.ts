@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { POST as createListHandler } from '../../src/routes/api/lists/+server';
+import { load as loadLists } from '../../src/routes/lists/+page.server';
+import { POST as createInvitationHandler } from '../../src/routes/api/lists/[id]/invite/+server';
+import { POST as acceptInvitationHandler } from '../../src/routes/api/invite/[token]/+server';
+import { load as loadInvitation } from '../../src/routes/invite/[token]/+page.server';
 
 const url = process.env.PUBLIC_SUPABASE_URL!;
 const key = process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
@@ -125,6 +130,53 @@ describe('anonymous access', () => {
 });
 
 describe('lists and tasks', () => {
+	it('creates, previews, and accepts an invitation through the app', async () => {
+		const listId = await createList(alex.client, alex.id, 'Invitation test');
+		const response = await createInvitationHandler({
+			params: { id: listId },
+			locals: { supabase: alex.client },
+			url: new URL('http://localhost'),
+			request: new Request('http://localhost', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({})
+			})
+		} as Parameters<typeof createInvitationHandler>[0]);
+		expect(response.status).toBe(200);
+		const { link, token: invitationToken } = await response.json();
+		expect(link).toBe(`http://localhost/invite/${invitationToken}`);
+
+		const preview = await loadInvitation({
+			params: { token: invitationToken },
+			locals: { supabase: stranger.client }
+		} as Parameters<typeof loadInvitation>[0]);
+		expect(preview?.invitation.lists.name).toBe('Invitation test');
+
+		const accepted = await acceptInvitationHandler({
+			params: { token: invitationToken },
+			locals: { supabase: stranger.client }
+		} as Parameters<typeof acceptInvitationHandler>[0]);
+		expect(accepted.status).toBe(200);
+		const { data, error } = await stranger.client.from('lists').select('id').eq('id', listId);
+		expect(error).toBeNull();
+		expect(data).toHaveLength(1);
+	});
+
+	it('creates a list through the API and returns it', async () => {
+		const response = await createListHandler({
+			locals: { supabase: alex.client },
+			request: new Request('http://localhost/api/lists', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ name: '  API list  ' })
+			})
+		} as Parameters<typeof createListHandler>[0]);
+		expect(response.status).toBe(200);
+		const list = await response.json();
+		createdLists.push(list.id);
+		expect(list).toMatchObject({ name: 'API list', owner_id: alex.id });
+	});
+
 	it('lets the owner create and rename a list', async () => {
 		const id = await createList(alex.client, alex.id, 'Mine');
 		const rename = await alex.client
@@ -138,6 +190,37 @@ describe('lists and tasks', () => {
 	it('refuses to create a list owned by someone else', async () => {
 		const { error } = await stranger.client.from('lists').insert({ name: 'x', owner_id: alex.id });
 		expect(error).not.toBeNull();
+	});
+
+	it('shows owned and shared lists but not unrelated lists', async () => {
+		const sharedId = await createList(alex.client, alex.id, 'Shared');
+		const privateId = await createList(alex.client, alex.id, 'Private');
+		const invitation = await invite(alex.client, sharedId);
+		expect((await accept(stranger, invitation)).error).toBeNull();
+
+		const owned = await alex.client
+			.from('lists')
+			.select('id, name, owner_id, created_at, updated_at')
+			.order('updated_at', { ascending: false });
+		expect(owned.error).toBeNull();
+		expect(owned.data?.map((list) => list.id)).toEqual(
+			expect.arrayContaining([sharedId, privateId])
+		);
+
+		const shared = await stranger.client
+			.from('lists')
+			.select('id, name, owner_id, created_at, updated_at')
+			.order('updated_at', { ascending: false });
+		expect(shared.error).toBeNull();
+		expect(shared.data?.map((list) => list.id)).toContain(sharedId);
+		expect(shared.data?.map((list) => list.id)).not.toContain(privateId);
+
+		const dashboard = await loadLists({
+			locals: { supabase: stranger.client }
+		} as Parameters<typeof loadLists>[0]);
+		expect(dashboard).toBeDefined();
+		expect(dashboard!.lists.map((list: { id: string }) => list.id)).toContain(sharedId);
+		expect(dashboard!.lists.map((list: { id: string }) => list.id)).not.toContain(privateId);
 	});
 
 	it('hides lists and tasks from non-members', async () => {

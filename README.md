@@ -67,3 +67,49 @@ Local and hosted projects have separate users and data. For a hosted project:
 1. Apply the migrations to it. Do not apply the seed.
 2. Set `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_PUBLISHABLE_KEY` in the deployment provider.
 3. Set the Auth site URL and allow-list `https://your-app-domain/auth/callback`.
+
+## Web UI Implementation
+
+The complete Svelte 5 UI is now implemented. See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed architecture documentation.
+
+### Quick Start (Web UI)
+
+```bash
+npm run dev
+# Navigate to http://localhost:5173
+
+# First visit:
+# → Redirects to /auth (unauthenticated)
+# → Sign up or sign in
+# → Redirects to /lists dashboard
+# → Create lists, add tasks, manage members
+```
+
+### Key Features
+
+- **Authentication**: Sign in/up with email/password
+- **Lists**: Create, view, and delete lists
+- **Tasks**: Add, complete, and delete tasks with smooth animations
+- **Sharing**: Generate shareable invite links (7-day expiry)
+- **Members**: View members, remove members (owners only)
+- **Responsive**: Mobile-first design, works on all screen sizes
+- **Animations**: Built-in Svelte transitions and flip animations
+
+### Routes
+
+- `/` - Auto-redirect to auth or lists
+- `/auth` - Sign in / Sign up
+- `/lists` - Dashboard of all lists
+- `/lists/[id]` - List detail with tasks
+- `/invite/[token]` - Accept invitation
+
+### Pages Built
+
+✓ Authentication pages (sign in / sign up)  
+✓ Lists dashboard (create, view, delete)  
+✓ List detail page (tasks, members, invitations)  
+✓ Invitation acceptance flow  
+✓ Member management (view, remove)  
+✓ Full API backend (create, read, update, delete)  
+
+See IMPLEMENTATION.md for complete architecture documentation.

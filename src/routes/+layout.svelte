@@ -1,6 +1,5 @@
 <script lang="ts">
 	import './layout.css';
-	import DemoLinks from './demo/DemoLinks.svelte';
 	import favicon from '#lib/assets/favicon.svg';
 	import type { LayoutProps } from './$types';
 
@@ -9,7 +8,8 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="description" content="LiteList - Simple collaborative to-do lists" />
 </svelte:head>
 
 {@render children()}
-<DemoLinks />
