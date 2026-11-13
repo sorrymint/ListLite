@@ -62,14 +62,16 @@ test user until the next `db reset`.
 Schema changes live in `supabase/migrations`. Add a new migration file for each change; do not edit applied ones.
 Tests are in `supabase/tests`. Supabase Auth owns `auth.users`; a trigger creates a matching `public.profiles` row.
 
-## Hosted Supabase (not set up yet)
+## Hosted Supabase
 
 Local and hosted projects have separate users and data. For a hosted project:
 
 1. Apply the migrations to it. Do not apply the seed.
 2. Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in the deployment provider. The Vercel Supabase
    integration provides these names automatically.
-3. Set the Auth site URL and allow-list `https://your-app-domain/auth/callback`.
+3. In Supabase Dashboard, open **Authentication → URL Configuration** and set the Site URL to
+   `https://list-lite.vercel.app`. Add `https://list-lite.vercel.app/auth/callback` to the Redirect URLs list.
+   The Site URL is the fallback when a requested redirect isn't allow-listed, so keep the callback URL in that list.
 
 ## Web UI Implementation
 
