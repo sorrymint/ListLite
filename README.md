@@ -1,59 +1,69 @@
 # LiteList
 
-A demo project for [sorrymint](https://github.com/sorrymint) to learn more about BaaS.
-You probably shouldn't use this project as a template for your own project, or use it in production, but feel free to use it as a reference for your own project.
+A demo to-do list app for [sorrymint](https://github.com/sorrymint) to learn backend as a service (BaaS).
+It is a learning project, not a template for production use.
 
-<!-- # sv
+See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the architecture, current status, and next steps.
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+## AI Disclosure
 
-## Creating a project
+This project was created with the help of AI tools.
+I used this project not only to learn about BaaS, but also to learn how to work effectively with AI. I am learning to use AI tools to help me write code, documentation, and tests. I am also learning to use AI tools to help me understand and debug code.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Quick start
 
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
+Run Supabase commands **on the host** (they need Docker). The app can run on the host or in Distrobox.
 
 ```sh
-# recreate this project
-npx sv@1.3.0 create --template minimal --types ts --add prettier eslint vitest="usages:unit,component" playwright="demo:yes" tailwindcss="plugins:typography,forms" enhanced-img sveltekit-adapter="adapter:vercel" mdsvex ai-tools="ide:vscode+tools:mcp,svelte-code-writer,svelte-core-bestpractices,svelte-file-editor+mcpSetup:remote+optInSkills:none" --install npm litelist
+npm install
+cp .env.example .env     # then paste the publishable key printed by `supabase start`
+npx supabase start       # starts the local Supabase stack
+npx supabase db reset    # applies migrations and seed data (deletes local data!)
+npm run dev              # http://localhost:5173
 ```
 
-## Adding features
+Never put a Supabase secret or service-role key in `.env`; only the URL and publishable key belong there.
+Studio (database UI) is at <http://127.0.0.1:54323> and Mailpit (test email) at <http://127.0.0.1:54324>.
+Stop the stack with `npx supabase stop`. The stack exposes dev services to your network, so avoid untrusted networks.
 
-Add features to your project with `sv add`:
+## Development accounts
 
-```sh
-npx sv add
-```
+The seed creates these local-only accounts. Never use them on a hosted project.
 
-For example, to add Tailwind CSS:
+| Email               | Password                     |
+| ------------------- | ---------------------------- |
+| `alex@example.test` | `litelist-dev-only-password` |
+| `sam@example.test`  | `litelist-dev-only-password` |
 
-```sh
-npx sv add tailwindcss
-```
+Sample invitation token: `litelist-dev-invitation-token-0001`.
 
-## Developing
+## Commands
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+| Command                      | Purpose                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `npm run dev`                | Start the dev server                                                       |
+| `npm run build`              | Production build                                                           |
+| `npm run check`              | Svelte and TypeScript checks                                               |
+| `npm run lint`               | Prettier and ESLint                                                        |
+| `npm run format`             | Auto-format                                                                |
+| `npm run test:unit -- --run` | Unit tests (no Supabase needed)                                            |
+| `npm run test:db`            | Database tests against the running local stack (access rules, invitations) |
+| `npm run test:e2e`           | Playwright end-to-end tests                                                |
+| `npx supabase migration up`  | Apply new migrations without deleting local data                           |
+| `npx supabase db reset`      | Recreate the local database from migrations and seed                       |
 
-```sh
-npm run dev
+`test:db` needs `npx supabase start` and a seeded database. It cleans up its own lists, but each run leaves one extra
+test user until the next `db reset`.
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+## Database
 
-## Building
+Schema changes live in `supabase/migrations`. Add a new migration file for each change; do not edit applied ones.
+Tests are in `supabase/tests`. Supabase Auth owns `auth.users`; a trigger creates a matching `public.profiles` row.
 
-To create a production version of your app:
+## Hosted Supabase (not set up yet)
 
-```sh
-npm run build
-```
+Local and hosted projects have separate users and data. For a hosted project:
 
-You can preview the production build with `npm run preview`. -->
+1. Apply the migrations to it. Do not apply the seed.
+2. Set `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_PUBLISHABLE_KEY` in the deployment provider.
+3. Set the Auth site URL and allow-list `https://your-app-domain/auth/callback`.
