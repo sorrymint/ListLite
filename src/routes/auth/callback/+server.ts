@@ -8,7 +8,16 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const { error: exchangeError } = await locals.supabase.auth.exchangeCodeForSession(code);
 	if (exchangeError) {
 		console.error('Supabase email confirmation failed:', exchangeError);
-		error(400, 'Could not confirm your email. The link may be invalid or expired.');
+		error(
+			400,
+			'Could not finish confirming your email. Open the link in the same browser where you signed up, and check that it has not expired.'
+		);
 	}
-	redirect(303, '/');
+
+	const { error: signOutError } = await locals.supabase.auth.signOut({ scope: 'local' });
+	if (signOutError) {
+		console.error('Supabase sign-out after email confirmation failed:', signOutError);
+		error(500, 'Your email was confirmed, but we could not sign you out. Please try again.');
+	}
+	redirect(303, '/auth');
 };

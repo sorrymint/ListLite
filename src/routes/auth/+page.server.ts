@@ -1,5 +1,5 @@
 import { isAuthSessionMissingError } from '@supabase/supabase-js';
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -24,6 +24,14 @@ function credentials(form: FormData) {
 }
 
 export const actions: Actions = {
+	signOut: async ({ locals }) => {
+		const { error: signOutError } = await locals.supabase.auth.signOut({ scope: 'local' });
+		if (signOutError) {
+			console.error('Supabase sign-out failed:', signOutError);
+			error(500, 'Could not sign out. Please try again.');
+		}
+		redirect(303, '/auth');
+	},
 	signIn: async ({ request, locals }) => {
 		const input = credentials(await request.formData());
 		if (!input) return fail(400, { error: 'Enter your email and password.' });

@@ -92,7 +92,8 @@ npm run dev
 
 ### Key Features
 
-- **Authentication**: Sign in/up with email/password
+- **Authentication**: Sign in/up with email/password. If email confirmation is enabled, open the confirmation link in
+  the same browser used to sign up, then sign in. Signing out returns to the sign-in page.
 - **Lists**: Create, view, and delete lists
 - **Tasks**: Add, complete, and delete tasks with smooth animations
 - **Sharing**: Generate shareable invite links (7-day expiry)
@@ -104,6 +105,7 @@ npm run dev
 
 - `/` - Auto-redirect to auth or lists
 - `/auth` - Sign in / Sign up
+- `/auth/callback` - Complete email confirmation and return to sign in
 - `/lists` - Dashboard of all lists
 - `/lists/[id]` - List detail with tasks
 - `/invite/[token]` - Accept invitation
