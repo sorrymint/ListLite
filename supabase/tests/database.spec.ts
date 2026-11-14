@@ -107,7 +107,12 @@ describe('profiles', () => {
 	});
 
 	it('shows profiles of users on shared lists', async () => {
-		const { data } = await sam.client.from('profiles').select().eq('id', alex.id);
+		const listId = await createList(alex.client, alex.id);
+		const invitation = await invite(alex.client, listId);
+		expect((await accept(sam, invitation)).error).toBeNull();
+
+		const { data, error } = await sam.client.from('profiles').select().eq('id', alex.id);
+		expect(error).toBeNull();
 		expect(data).toHaveLength(1);
 	});
 });
@@ -376,18 +381,38 @@ describe('membership', () => {
 	it('lets owners remove members and members leave, but not remove others', async () => {
 		const listId = await createList(alex.client, alex.id);
 		const t = await invite(alex.client, listId);
-		await accept(sam, t);
-		await accept(stranger, t);
+		expect((await accept(sam, t)).error).toBeNull();
+		expect((await accept(stranger, t)).error).toBeNull();
+		const otherListId = await createList(alex.client, alex.id);
+		const otherInvitation = await invite(alex.client, otherListId);
+		expect((await accept(sam, otherInvitation)).error).toBeNull();
 
-		await sam.client.from('list_members').delete().eq('user_id', stranger.id);
+		await sam.client.from('list_members').delete().eq('list_id', listId).eq('user_id', stranger.id);
 		let { data } = await alex.client.from('list_members').select().eq('list_id', listId);
 		expect(data).toHaveLength(2);
 
-		await alex.client.from('list_members').delete().eq('user_id', stranger.id);
-		await sam.client.from('list_members').delete().eq('user_id', sam.id);
+		const removal = await alex.client
+			.from('list_members')
+			.delete()
+			.eq('list_id', listId)
+			.eq('user_id', stranger.id);
+		expect(removal.error).toBeNull();
+		const leave = await sam.client
+			.from('list_members')
+			.delete()
+			.eq('list_id', listId)
+			.eq('user_id', sam.id);
+		expect(leave.error).toBeNull();
 		({ data } = await alex.client.from('list_members').select().eq('list_id', listId));
 		expect(data).toHaveLength(0);
 		expect((await sam.client.from('lists').select().eq('id', listId)).data).toHaveLength(0);
+		const otherMembership = await sam.client
+			.from('list_members')
+			.select()
+			.eq('list_id', otherListId)
+			.eq('user_id', sam.id);
+		expect(otherMembership.error).toBeNull();
+		expect(otherMembership.data).toHaveLength(1);
 	});
 
 	it('cannot add members directly', async () => {

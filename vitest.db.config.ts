@@ -9,6 +9,6 @@ export default defineConfig(({ mode }) => ({
 		include: ['supabase/tests/**/*.spec.ts'],
 		fileParallelism: false,
 		testTimeout: 20000,
-		env: loadEnv(mode, process.cwd(), 'PUBLIC_')
+		env: loadEnv(mode, process.cwd(), 'SUPABASE_')
 	}
 }));
