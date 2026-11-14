@@ -31,34 +31,22 @@ Setup and commands are in [README.md](./README.md).
 - Seed data: two dev users, sample lists, tasks, and an invitation (`supabase/seed.sql`).
 - Tests: 9 unit tests (`npm run test:unit -- --run`) and 26 database tests (`npm run test:db`) covering profiles, anonymous
   denial, list/task access, invitations (reuse, expiry, revocation), membership, and cascading deletion.
+- List and task screens, and the invitation UI (create link, preview, accept, manage members).
 
 **Not done**
 
-- List and task screens, and the invitation UI (create link, preview, accept, manage members).
 - Password reset; end-to-end test of email confirmation redirects (callback is allow-listed for ports 5173 and 3000).
-- Hosted Supabase project, deployment, and generated TypeScript types for the schema
-  (`npx supabase gen types typescript --local`).
+- Add Soft Delete for tasks. Allow users to restore deleted tasks for a limited time (e.g., 14 days) before permanent deletion.
+- Add Favicon and app icon.
+- Add icon to sign up page.
+- Add drop down menu for sign up section of the landing page.
+- Mobile clients (Android/iOS) using SvelteKit -> iOS/Android
+- Add a "delete account" button
+- Release workflow for iOS and Android clients using GitHub Actions.
+- Playwright end-to-end tests for the entire client flow.
 
 ## How the backend is used
 
 The web server builds a Supabase client from the user's cookie, so every query runs as that user and RLS applies.
 The app uses `supabase-js` directly on tables, and `supabase.rpc(...)` for the invitation functions. The client generates
 the invitation token (at least 32 random characters) and builds the link. Authorization lives only in the database.
-
-## Next steps
-
-1. Generate TypeScript types from the schema.
-2. Build the authenticated list and task screens.
-3. Build the invitation workflow and member management.
-4. Add password reset and test email confirmation with confirmation enabled.
-5. Create the hosted Supabase project, apply migrations (no seed), configure Auth URLs, and test access rules there.
-6. Expand normal and unauthorized end-to-end coverage.
-
-Deferred: ownership transfer, task ordering/due dates, expired-invitation cleanup, offline mode, push notifications,
-recurring tasks, and real-time updates.
-
-## Working approach
-
-Work in small phases and explain unfamiliar terms and security decisions in plain English. The project owner is learning
-to work effectively with AI and prefers quick, direct work. Never run `db reset` on the owner's local database without
-asking. Add new migration files rather than editing applied ones, and add a database test for any rule you change.

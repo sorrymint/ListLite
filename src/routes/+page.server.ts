@@ -8,11 +8,5 @@ export const load: PageServerLoad = async ({ locals }) => {
 		redirect(303, '/auth');
 	}
 
-	const { data: profile } = await locals.supabase
-		.from('profiles')
-		.select('display_name')
-		.eq('id', data.user.id)
-		.maybeSingle();
-
-	return { user: data.user, profile };
+	redirect(303, '/lists');
 };

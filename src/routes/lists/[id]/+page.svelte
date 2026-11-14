@@ -67,7 +67,7 @@
 
 			if (response.ok) {
 				const updated = await response.json();
-				tasks = tasks.map(t => (t.id === task.id ? updated : t));
+				tasks = tasks.map((t) => (t.id === task.id ? updated : t));
 			}
 		} catch (e) {
 			console.error('Error updating task:', e);
@@ -81,7 +81,7 @@
 			});
 
 			if (response.ok) {
-				tasks = tasks.filter(t => t.id !== taskId);
+				tasks = tasks.filter((t) => t.id !== taskId);
 			}
 		} catch (e) {
 			console.error('Error deleting task:', e);
@@ -149,18 +149,15 @@
 </svelte:head>
 
 <div class="min-h-screen bg-slate-50">
-	<header class="bg-white border-b border-slate-200 sticky top-0 z-40">
-		<div class="max-w-2xl mx-auto px-4 py-4 sm:py-6">
-			<div class="flex items-center justify-between gap-4 mb-4">
-				<div class="flex-1 min-w-0">
-					<h1 class="text-2xl sm:text-3xl font-bold text-slate-900 truncate">{listName}</h1>
-					<p class="text-sm text-slate-500 mt-1">
-						{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
-					</p>
+	<header class="sticky top-0 z-40 border-b border-slate-200 bg-white">
+		<div class="mx-auto max-w-2xl px-4 py-4 sm:py-6">
+			<div class="mb-4 flex items-center justify-between gap-4">
+				<div class="min-w-0 flex-1">
+					<h1 class="truncate text-2xl font-bold text-slate-900 sm:text-3xl">{listName}</h1>
 				</div>
 				<a
 					href="/lists"
-					class="text-sm font-semibold text-slate-700 hover:bg-slate-100 px-3 py-2 rounded-lg transition-colors"
+					class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
 				>
 					Back
 				</a>
@@ -171,7 +168,7 @@
 						showMembers = !showMembers;
 						showInvite = false;
 					}}
-					class="text-sm font-semibold text-slate-700 hover:bg-slate-100 px-3 py-2 rounded-lg transition-colors"
+					class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
 				>
 					Members
 				</button>
@@ -181,14 +178,14 @@
 							showInvite = !showInvite;
 							showMembers = false;
 						}}
-						class="text-sm font-semibold text-slate-700 hover:bg-slate-100 px-3 py-2 rounded-lg transition-colors"
+						class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
 					>
 						Invite
 					</button>
 				{:else}
 					<button
 						onclick={leaveList}
-						class="text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors"
+						class="rounded-lg px-3 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
 					>
 						Leave
 					</button>
@@ -197,15 +194,21 @@
 		</div>
 	</header>
 
-	<main class="max-w-2xl mx-auto px-4 py-6 sm:py-8">
+	<main class="mx-auto max-w-2xl px-4 py-6 sm:py-8">
 		{#if showMembers}
-			<section transition:slide={{ duration: 200 }} class="mb-8 bg-white border border-slate-200 rounded-lg p-4" aria-labelledby="members-heading">
-				<h2 id="members-heading" class="text-lg font-bold text-slate-900 mb-4">Members</h2>
+			<section
+				transition:slide={{ duration: 200 }}
+				class="mb-8 rounded-lg border border-slate-200 bg-white p-4"
+				aria-labelledby="members-heading"
+			>
+				<h2 id="members-heading" class="mb-4 text-lg font-bold text-slate-900">Members</h2>
 				<div class="space-y-2">
 					{#each members as member (member.user_id)}
 						<div class="flex items-center justify-between">
 							<div>
-								<span class="text-slate-900 font-semibold">{member.profiles?.display_name || 'Unknown'}</span>
+								<span class="font-semibold text-slate-900"
+									>{member.profiles?.display_name || 'Unknown'}</span
+								>
 								{#if member.user_id === data.list.owner_id}
 									<span class="ml-2 text-xs font-semibold text-slate-500">owner</span>
 								{/if}
@@ -213,7 +216,7 @@
 							{#if isOwner && member.user_id !== userId && member.user_id !== data.list.owner_id}
 								<button
 									onclick={() => removeMember(member.user_id)}
-									class="text-sm text-red-600 hover:text-red-700 font-semibold"
+									class="text-sm font-semibold text-red-600 hover:text-red-700"
 								>
 									Remove
 								</button>
@@ -225,35 +228,46 @@
 		{/if}
 
 		{#if showInvite && isOwner}
-			<section transition:slide={{ duration: 200 }} class="mb-8 bg-white border border-slate-200 rounded-lg p-4" aria-labelledby="invite-heading">
-				<h2 id="invite-heading" class="text-lg font-bold text-slate-900 mb-4">Invite members</h2>
-				<p class="text-sm text-slate-600 mb-4">
+			<section
+				transition:slide={{ duration: 200 }}
+				class="mb-8 rounded-lg border border-slate-200 bg-white p-4"
+				aria-labelledby="invite-heading"
+			>
+				<h2 id="invite-heading" class="mb-4 text-lg font-bold text-slate-900">Invite members</h2>
+				<p class="mb-4 text-sm text-slate-600">
 					Generate a link to invite others to this list. Links expire after 7 days.
 				</p>
 				<button
 					onclick={copyInviteLink}
-					class="w-full px-4 py-2 bg-teal-700 text-white font-bold rounded-lg hover:bg-teal-800 transition-colors"
+					class="w-full rounded-lg bg-teal-700 px-4 py-2 font-bold text-white transition-colors hover:bg-teal-800"
 				>
 					{inviteLinkCopied ? '✓ Copied!' : 'Copy invite link'}
 				</button>
 			</section>
 		{/if}
 
-		<section class="mb-8" aria-labelledby="new-task-heading">
+		<section class="mb-6" aria-labelledby="new-task-heading">
 			<h2 id="new-task-heading" class="sr-only">Add a new task</h2>
-			<form onsubmit={e => { e.preventDefault(); createTask(); }} class="flex gap-2">
+
+			<form
+				onsubmit={(e) => {
+					e.preventDefault();
+					createTask();
+				}}
+				class="flex gap-2"
+			>
 				<input
 					type="text"
 					placeholder="Add a new task..."
 					bind:value={newTaskTitle}
 					maxlength="500"
 					disabled={isCreatingTask}
-					class="flex-1 min-h-11 px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-500 focus-visible:outline-offset-2 focus-visible:outline-3 focus-visible:outline-teal-500 disabled:opacity-50"
+					class="min-h-11 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500 disabled:opacity-50"
 				/>
 				<button
 					type="submit"
 					disabled={isCreatingTask || !newTaskTitle.trim()}
-					class="min-h-11 px-6 py-2 bg-teal-700 text-white font-bold rounded-lg hover:bg-teal-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+					class="min-h-11 rounded-lg bg-teal-700 px-6 py-2 font-bold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					{isCreatingTask ? 'Adding...' : 'Add'}
 				</button>
@@ -261,28 +275,32 @@
 		</section>
 
 		{#if tasks.length === 0}
-			<div transition:fade={{ duration: 200 }} class="text-center py-12">
+			<div transition:fade={{ duration: 200 }} class="py-12 text-center">
 				<p class="text-slate-600">No tasks yet. Add one to get started!</p>
 			</div>
 		{:else}
 			<section aria-labelledby="tasks-heading">
 				<h2 id="tasks-heading" class="sr-only">Tasks in this list</h2>
+				<p class="m-2 text-sm text-slate-500">
+					{tasks.length === 1 ? 'Task: ' : 'Tasks: '}
+					{tasks.length}
+				</p>
 				<div class="space-y-2">
 					{#each tasks as task (task.id)}
 						<div
 							animate:flip={{ duration: 200 }}
 							transition:fly={{ y: -10, duration: 150 }}
-							class="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow flex items-center gap-3"
+							class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 transition-shadow hover:shadow-sm"
 						>
 							<button
 								onclick={() => toggleTask(task)}
-								class="flex-shrink-0 w-6 h-6 rounded border-2 border-slate-300 hover:border-teal-500 transition-colors flex items-center justify-center"
+								class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded border-2 border-slate-300 transition-colors hover:border-teal-500"
 								class:bg-teal-500={task.is_complete}
 								class:border-teal-500={task.is_complete}
 								aria-label={task.is_complete ? 'Mark incomplete' : 'Mark complete'}
 							>
 								{#if task.is_complete}
-									<span class="text-white font-bold">✓</span>
+									<span class="font-bold text-white">✓</span>
 								{/if}
 							</button>
 							<span
@@ -294,7 +312,7 @@
 							</span>
 							<button
 								onclick={() => deleteTask(task.id)}
-								class="text-sm text-red-600 hover:text-red-700 font-semibold px-2 py-1"
+								class="px-2 py-1 text-sm font-semibold text-red-600 hover:text-red-700"
 							>
 								Delete
 							</button>
