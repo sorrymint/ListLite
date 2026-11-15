@@ -1,47 +1,52 @@
 <script lang="ts">
-	import type { PageData } from './$types';
-
 	type ActionFeedback = {
 		error?: string;
 		message?: string;
 	} | null;
 
-	let { data, form }: { data: PageData; form: ActionFeedback } = $props();
+	let { form }: { form: ActionFeedback } = $props();
 </script>
 
 <svelte:head>
 	<title>Sign in or create account - LiteList</title>
 </svelte:head>
 
-<main class="min-h-screen grid place-items-center px-4 py-8 bg-slate-50">
-	<div class="w-full max-w-2xl bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+<main class="grid min-h-screen place-items-center bg-slate-50 px-4 py-8">
+	<div class="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
 		<header class="mb-8">
-			<p class="text-sm font-bold tracking-wide text-teal-700 uppercase mb-2">LiteList</p>
-			<h1 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-2 -tracking-0.01em">
+			<p class="mb-2 text-sm font-bold tracking-wide text-teal-700 uppercase">LiteList</p>
+			<h1 class="-tracking-0.01em mb-2 text-3xl font-bold text-slate-900 sm:text-4xl">
 				Your lists, all in one place.
 			</h1>
-			<p class="text-base text-slate-600 leading-relaxed">
+			<p class="text-base leading-relaxed text-slate-600">
 				Sign in or create an account to keep your lists close at hand.
 			</p>
+			<img src="/icons/icon.svg" class="mx-auto h-40" alt="LiteList icon" />
 		</header>
 
 		{#if form?.error}
-			<p class="mb-6 px-4 py-3 rounded-lg border border-red-300 bg-red-50 text-red-900 text-sm leading-relaxed" role="alert">
+			<p
+				class="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm leading-relaxed text-red-900"
+				role="alert"
+			>
 				{form.error}
 			</p>
 		{/if}
 		{#if form?.message}
-			<p class="mb-6 px-4 py-3 rounded-lg border border-green-300 bg-green-50 text-green-900 text-sm leading-relaxed" role="status">
+			<p
+				class="mb-6 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm leading-relaxed text-green-900"
+				role="status"
+			>
 				{form.message}
 			</p>
 		{/if}
 
-		<div class="grid sm:grid-cols-2 gap-8">
+		<div class="grid gap-8 sm:grid-cols-2">
 			<section aria-labelledby="sign-in-heading" class="sm:border-r sm:pr-8">
-				<h2 id="sign-in-heading" class="text-lg font-bold text-slate-900 mb-6">Sign in</h2>
+				<h2 id="sign-in-heading" class="mb-6 text-lg font-bold text-slate-900">Sign in</h2>
 				<form method="POST" action="?/signIn" class="space-y-5">
 					<div>
-						<label for="sign-in-email" class="block text-sm font-semibold text-slate-900 mb-2">
+						<label for="sign-in-email" class="mb-2 block text-sm font-semibold text-slate-900">
 							Email address
 						</label>
 						<input
@@ -50,11 +55,11 @@
 							type="email"
 							autocomplete="email"
 							required
-							class="w-full min-h-11 px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus-visible:outline-offset-2 focus-visible:outline-3 focus-visible:outline-teal-500"
+							class="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
 						/>
 					</div>
 					<div>
-						<label for="sign-in-password" class="block text-sm font-semibold text-slate-900 mb-2">
+						<label for="sign-in-password" class="mb-2 block text-sm font-semibold text-slate-900">
 							Password
 						</label>
 						<input
@@ -63,12 +68,12 @@
 							type="password"
 							autocomplete="current-password"
 							required
-							class="w-full min-h-11 px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus-visible:outline-offset-2 focus-visible:outline-3 focus-visible:outline-teal-500"
+							class="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
 						/>
 					</div>
 					<button
 						type="submit"
-						class="w-full min-h-11 px-4 py-2 bg-teal-700 text-white font-bold rounded-lg hover:bg-teal-800 transition-colors"
+						class="min-h-11 w-full rounded-lg bg-teal-700 px-4 py-2 font-bold text-white transition-colors hover:bg-teal-800"
 					>
 						Sign in
 					</button>
@@ -76,10 +81,13 @@
 			</section>
 
 			<section aria-labelledby="sign-up-heading" class="sm:pl-8">
-				<h2 id="sign-up-heading" class="text-lg font-bold text-slate-900 mb-6">Create account</h2>
+				<h2 id="sign-up-heading" class="mb-6 text-lg font-bold text-slate-900">Create account</h2>
 				<form method="POST" action="?/signUp" class="space-y-5">
 					<div>
-						<label for="sign-up-display-name" class="block text-sm font-semibold text-slate-900 mb-2">
+						<label
+							for="sign-up-display-name"
+							class="mb-2 block text-sm font-semibold text-slate-900"
+						>
 							Display name
 						</label>
 						<input
@@ -89,11 +97,11 @@
 							autocomplete="nickname"
 							maxlength="100"
 							required
-							class="w-full min-h-11 px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus-visible:outline-offset-2 focus-visible:outline-3 focus-visible:outline-teal-500"
+							class="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
 						/>
 					</div>
 					<div>
-						<label for="sign-up-email" class="block text-sm font-semibold text-slate-900 mb-2">
+						<label for="sign-up-email" class="mb-2 block text-sm font-semibold text-slate-900">
 							Email address
 						</label>
 						<input
@@ -102,11 +110,11 @@
 							type="email"
 							autocomplete="email"
 							required
-							class="w-full min-h-11 px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus-visible:outline-offset-2 focus-visible:outline-3 focus-visible:outline-teal-500"
+							class="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
 						/>
 					</div>
 					<div>
-						<label for="sign-up-password" class="block text-sm font-semibold text-slate-900 mb-2">
+						<label for="sign-up-password" class="mb-2 block text-sm font-semibold text-slate-900">
 							Password
 						</label>
 						<input
@@ -115,12 +123,12 @@
 							type="password"
 							autocomplete="new-password"
 							required
-							class="w-full min-h-11 px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus-visible:outline-offset-2 focus-visible:outline-3 focus-visible:outline-teal-500"
+							class="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
 						/>
 					</div>
 					<button
 						type="submit"
-						class="w-full min-h-11 px-4 py-2 bg-teal-700 text-white font-bold rounded-lg hover:bg-teal-800 transition-colors"
+						class="min-h-11 w-full rounded-lg bg-teal-700 px-4 py-2 font-bold text-white transition-colors hover:bg-teal-800"
 					>
 						Create account
 					</button>

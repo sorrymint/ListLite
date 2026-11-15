@@ -32,17 +32,15 @@ Setup and commands are in [README.md](./README.md).
 - Tests: 9 unit tests (`npm run test:unit -- --run`) and 26 database tests (`npm run test:db`) covering profiles, anonymous
   denial, list/task access, invitations (reuse, expiry, revocation), membership, and cascading deletion.
 - List and task screens, and the invitation UI (create link, preview, accept, manage members).
+- Add Soft Delete for tasks. Allow users to restore deleted tasks for a limited time (e.g., 14 days) before permanent deletion.
+- Add Favicon and app icon.
 
 **Not done**
 
 - Password reset; end-to-end test of email confirmation redirects (callback is allow-listed for ports 5173 and 3000).
-- Add Soft Delete for tasks. Allow users to restore deleted tasks for a limited time (e.g., 14 days) before permanent deletion.
-- Add Favicon and app icon.
 - Add icon to sign up page.
 - Add drop down menu for sign up section of the landing page.
-- Mobile clients (Android/iOS) using SvelteKit -> iOS/Android
 - Add a "delete account" button
-- Release workflow for iOS and Android clients using GitHub Actions.
 - Playwright end-to-end tests for the entire client flow.
 
 ## How the backend is used
