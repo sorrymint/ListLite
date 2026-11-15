@@ -6,6 +6,9 @@ import { load as loadLists } from '../../src/routes/lists/+page.server';
 import { POST as createInvitationHandler } from '../../src/routes/api/lists/[id]/invite/+server';
 import { POST as acceptInvitationHandler } from '../../src/routes/api/invite/[token]/+server';
 import { load as loadInvitation } from '../../src/routes/invite/[token]/+page.server';
+import { load as loadList } from '../../src/routes/lists/[id]/+page.server';
+import { DELETE as deleteTaskHandler } from '../../src/routes/api/lists/[id]/tasks/[taskId]/+server';
+import { POST as restoreTaskHandler } from '../../src/routes/api/lists/[id]/tasks/[taskId]/restore/+server';
 
 const url = process.env.SUPABASE_URL!;
 const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
@@ -425,11 +428,140 @@ describe('membership', () => {
 });
 
 describe('deletion', () => {
+	it('moves tasks to trash and lets a list member restore them through the app', async () => {
+		const listId = await createList(alex.client, alex.id);
+		const invitation = await invite(alex.client, listId);
+		expect((await accept(sam, invitation)).error).toBeNull();
+		const { data: task, error: insertError } = await alex.client
+			.from('tasks')
+			.insert({ list_id: listId, title: 'Recover me', is_complete: true })
+			.select()
+			.single();
+		expect(insertError).toBeNull();
+		expect(task).toMatchObject({ deleted: false, deleted_at: null });
+		const params = { id: listId, taskId: task!.id };
+
+		const deletion = await deleteTaskHandler({
+			params,
+			locals: { supabase: sam.client }
+		} as Parameters<typeof deleteTaskHandler>[0]);
+		expect(deletion.status).toBe(200);
+		const trashed = await alex.client.from('tasks').select().eq('id', task!.id).single();
+		expect(trashed.data).toMatchObject({ deleted: true, is_complete: true });
+		expect(Date.now() - new Date(trashed.data!.deleted_at).getTime()).toBeLessThan(10000);
+		const dashboard = await loadList({
+			params: { id: listId },
+			locals: { supabase: sam.client }
+		} as Parameters<typeof loadList>[0]);
+		expect(dashboard.tasks.map((item) => item.id)).not.toContain(task!.id);
+		expect(dashboard.deletedTasks.map((item) => item.id)).toContain(task!.id);
+		await expect(
+			deleteTaskHandler({
+				params,
+				locals: { supabase: sam.client }
+			} as Parameters<typeof deleteTaskHandler>[0])
+		).rejects.toMatchObject({ status: 404 });
+		await expect(
+			restoreTaskHandler({
+				params,
+				locals: { supabase: stranger.client }
+			} as Parameters<typeof restoreTaskHandler>[0])
+		).rejects.toMatchObject({ status: 403 });
+
+		const restoration = await restoreTaskHandler({
+			params,
+			locals: { supabase: alex.client }
+		} as Parameters<typeof restoreTaskHandler>[0]);
+		expect(restoration.status).toBe(200);
+		const restored = await alex.client.from('tasks').select().eq('id', task!.id).single();
+		expect(restored.data).toMatchObject({
+			deleted: false,
+			deleted_at: null,
+			title: 'Recover me',
+			is_complete: true
+		});
+		const refreshed = await loadList({
+			params: { id: listId },
+			locals: { supabase: sam.client }
+		} as Parameters<typeof loadList>[0]);
+		expect(refreshed.tasks.map((item) => item.id)).toContain(task!.id);
+		expect(refreshed.deletedTasks.map((item) => item.id)).not.toContain(task!.id);
+		await expect(
+			restoreTaskHandler({
+				params,
+				locals: { supabase: sam.client }
+			} as Parameters<typeof restoreTaskHandler>[0])
+		).rejects.toMatchObject({ status: 404 });
+	});
+
+	it('rejects unauthorized deletion, restoration, and direct timestamp or hard-delete changes', async () => {
+		const listId = await createList(alex.client, alex.id);
+		const { data: task } = await alex.client
+			.from('tasks')
+			.insert({ list_id: listId, title: 'Protected' })
+			.select()
+			.single();
+		const args = { target_list_id: listId, target_task_id: task!.id, target_deleted: true };
+		expect((await stranger.client.rpc('set_task_deleted', args)).error).not.toBeNull();
+		expect((await anon.rpc('set_task_deleted', args)).error).not.toBeNull();
+		expect(
+			(await alex.client.from('tasks').update({ deleted: true }).eq('id', task!.id)).error
+		).not.toBeNull();
+		expect(
+			(
+				await alex.client
+					.from('tasks')
+					.update({ deleted_at: new Date().toISOString() })
+					.eq('id', task!.id)
+			).error
+		).not.toBeNull();
+		expect((await alex.client.from('tasks').delete().eq('id', task!.id)).error).not.toBeNull();
+		expect((await alex.client.rpc('set_task_deleted', args)).data).toBe(true);
+		const firstDeletion = await alex.client
+			.from('tasks')
+			.select('deleted_at')
+			.eq('id', task!.id)
+			.single();
+		expect((await alex.client.rpc('set_task_deleted', args)).data).toBe(false);
+		const repeatedDeletion = await alex.client
+			.from('tasks')
+			.select('deleted_at')
+			.eq('id', task!.id)
+			.single();
+		expect(repeatedDeletion.data?.deleted_at).toBe(firstDeletion.data?.deleted_at);
+		expect(
+			(await stranger.client.rpc('set_task_deleted', { ...args, target_deleted: false })).error
+		).not.toBeNull();
+		const edit = await alex.client
+			.from('tasks')
+			.update({ is_complete: true })
+			.eq('id', task!.id)
+			.select();
+		expect(edit.data).toHaveLength(0);
+		expect(
+			(await alex.client.rpc('set_task_deleted', { ...args, target_list_id: randomUUID() }))
+				.error
+		).not.toBeNull();
+	});
+
 	it('only the owner can delete a list, and it cascades', async () => {
 		const listId = await createList(alex.client, alex.id);
 		const t = await invite(alex.client, listId);
 		await accept(sam, t);
-		await alex.client.from('tasks').insert({ list_id: listId, title: 'a' });
+		const { data: task } = await alex.client
+			.from('tasks')
+			.insert({ list_id: listId, title: 'a' })
+			.select()
+			.single();
+		expect(
+			(
+				await alex.client.rpc('set_task_deleted', {
+					target_list_id: listId,
+					target_task_id: task!.id,
+					target_deleted: true
+				})
+			).data
+		).toBe(true);
 
 		await sam.client.from('lists').delete().eq('id', listId);
 		expect((await alex.client.from('lists').select().eq('id', listId)).data).toHaveLength(1);

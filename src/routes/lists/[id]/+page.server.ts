@@ -27,11 +27,25 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		error(403, 'Access denied');
 	}
 
-	const { data: tasks } = await locals.supabase
-		.from('tasks')
-		.select('id, title, is_complete, created_at, updated_at')
-		.eq('list_id', params.id)
-		.order('created_at', { ascending: false });
+	const [activeResult, deletedResult] = await Promise.all([
+		locals.supabase
+			.from('tasks')
+			.select('id, title, is_complete, created_at, updated_at, deleted, deleted_at')
+			.eq('list_id', params.id)
+			.eq('deleted', false)
+			.order('created_at', { ascending: false }),
+		locals.supabase
+			.from('tasks')
+			.select('id, title, is_complete, created_at, updated_at, deleted, deleted_at')
+			.eq('list_id', params.id)
+			.eq('deleted', true)
+			.order('deleted_at', { ascending: false })
+	]);
+
+	if (activeResult.error || deletedResult.error) {
+		console.error('Error loading tasks:', activeResult.error || deletedResult.error);
+		error(500, 'Could not load tasks');
+	}
 
 	const { data: members, error: membersError } = await locals.supabase
 		.from('list_members')
@@ -55,7 +69,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	return {
 		user: data.user,
 		list,
-		tasks: tasks || [],
+		tasks: activeResult.data,
+		deletedTasks: deletedResult.data,
 		members: membersList,
 		isOwner
 	};

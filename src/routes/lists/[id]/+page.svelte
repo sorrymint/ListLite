@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { fly, fade, slide } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
 	import type { PageData } from './$types';
@@ -12,6 +12,10 @@
 		updated_at: string;
 	}
 
+	interface DeletedTask extends Task {
+		deleted_at: string | null;
+	}
+
 	interface Member {
 		user_id: string;
 		profiles: { display_name: string; id: string } | null;
@@ -19,16 +23,15 @@
 
 	let { data }: { data: PageData } = $props();
 
-	let tasks: Task[] = $state(data.tasks);
+	let tasks: Task[] = $derived(data.tasks);
+	let deletedTasks: DeletedTask[] = $derived(data.deletedTasks);
 	let newTaskTitle = $state('');
-	let isCreatingTask = $state(false);
+	let busyTaskAction = $state('');
+	let taskError = $state('');
+	let taskNotice = $state('');
 	let showMembers = $state(false);
 	let showInvite = $state(false);
 	let inviteLinkCopied = $state(false);
-
-	$effect(() => {
-		tasks = data.tasks;
-	});
 
 	const userId = $derived(data.user?.id);
 	const isOwner = $derived(data.isOwner);
@@ -36,10 +39,35 @@
 	const listName = $derived(data.list.name);
 	const members = $derived(data.members as Member[]);
 
-	const createTask = async () => {
-		if (!newTaskTitle.trim() || isCreatingTask) return;
+	class TaskRequestError extends Error {}
 
-		isCreatingTask = true;
+	const checkTaskResponse = async (response: Response) => {
+		if (response.ok) return;
+		const body = await response.json().catch(() => null);
+		throw new TaskRequestError(
+			typeof body?.message === 'string' ? body.message : 'Please try again.'
+		);
+	};
+
+	const reportTaskError = (action: string, error: unknown) => {
+		taskError = `${action}: ${error instanceof TaskRequestError ? error.message : 'Please try again.'}`;
+	};
+
+	const refreshTasks = async () => {
+		try {
+			await invalidateAll();
+		} catch {
+			taskError =
+				'The change was saved, but the list could not be refreshed. Reload the page to sync.';
+		}
+	};
+
+	const createTask = async () => {
+		if (!newTaskTitle.trim() || busyTaskAction) return;
+
+		busyTaskAction = 'create';
+		taskError = '';
+		taskNotice = '';
 		try {
 			const response = await fetch(`/api/lists/${listId}/tasks`, {
 				method: 'POST',
@@ -47,17 +75,22 @@
 				body: JSON.stringify({ title: newTaskTitle.trim() })
 			});
 
-			if (response.ok) {
-				const newTask = await response.json();
-				tasks = [newTask, ...tasks];
-				newTaskTitle = '';
-			}
+			await checkTaskResponse(response);
+			const newTask = await response.json();
+			tasks = [newTask, ...tasks];
+			newTaskTitle = '';
+		} catch (error) {
+			reportTaskError('Could not add task', error);
 		} finally {
-			isCreatingTask = false;
+			busyTaskAction = '';
 		}
 	};
 
 	const toggleTask = async (task: Task) => {
+		if (busyTaskAction) return;
+		busyTaskAction = `toggle:${task.id}`;
+		taskError = '';
+		taskNotice = '';
 		try {
 			const response = await fetch(`/api/lists/${listId}/tasks/${task.id}`, {
 				method: 'PATCH',
@@ -65,26 +98,58 @@
 				body: JSON.stringify({ is_complete: !task.is_complete })
 			});
 
-			if (response.ok) {
-				const updated = await response.json();
-				tasks = tasks.map((t) => (t.id === task.id ? updated : t));
-			}
-		} catch (e) {
-			console.error('Error updating task:', e);
+			await checkTaskResponse(response);
+			const updated = await response.json();
+			tasks = tasks.map((t) => (t.id === task.id ? updated : t));
+		} catch (error) {
+			reportTaskError('Could not update task', error);
+		} finally {
+			busyTaskAction = '';
 		}
 	};
 
 	const deleteTask = async (taskId: string) => {
+		if (busyTaskAction) return;
+		const task = tasks.find((item) => item.id === taskId);
+		if (!task) return;
+		busyTaskAction = `delete:${taskId}`;
+		taskError = '';
+		taskNotice = '';
 		try {
 			const response = await fetch(`/api/lists/${listId}/tasks/${taskId}`, {
 				method: 'DELETE'
 			});
 
-			if (response.ok) {
-				tasks = tasks.filter((t) => t.id !== taskId);
-			}
-		} catch (e) {
-			console.error('Error deleting task:', e);
+			await checkTaskResponse(response);
+			tasks = tasks.filter((t) => t.id !== taskId);
+			deletedTasks = [{ ...task, deleted_at: null }, ...deletedTasks];
+			taskNotice = `${task.title} moved to Removed.`;
+			await refreshTasks();
+		} catch (error) {
+			reportTaskError('Could not move task to Removed', error);
+		} finally {
+			busyTaskAction = '';
+		}
+	};
+
+	const restoreTask = async (task: DeletedTask) => {
+		if (busyTaskAction) return;
+		busyTaskAction = `restore:${task.id}`;
+		taskError = '';
+		taskNotice = '';
+		try {
+			const response = await fetch(`/api/lists/${listId}/tasks/${task.id}/restore`, {
+				method: 'POST'
+			});
+			await checkTaskResponse(response);
+			deletedTasks = deletedTasks.filter((item) => item.id !== task.id);
+			tasks = [task, ...tasks];
+			taskNotice = `${task.title} restored.`;
+			await refreshTasks();
+		} catch (error) {
+			reportTaskError('Could not restore task', error);
+		} finally {
+			busyTaskAction = '';
 		}
 	};
 
@@ -195,6 +260,8 @@
 	</header>
 
 	<main class="mx-auto max-w-2xl px-4 py-6 sm:py-8">
+		<p role="status" class="sr-only">{taskNotice}</p>
+
 		{#if showMembers}
 			<section
 				transition:slide={{ duration: 200 }}
@@ -259,32 +326,40 @@
 				<input
 					type="text"
 					placeholder="Add a new task..."
+					aria-label="New task title"
 					bind:value={newTaskTitle}
 					maxlength="500"
-					disabled={isCreatingTask}
+					disabled={!!busyTaskAction}
 					class="min-h-11 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500 disabled:opacity-50"
 				/>
 				<button
 					type="submit"
-					disabled={isCreatingTask || !newTaskTitle.trim()}
+					disabled={!!busyTaskAction || !newTaskTitle.trim()}
 					class="min-h-11 rounded-lg bg-teal-700 px-6 py-2 font-bold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50"
 				>
-					{isCreatingTask ? 'Adding...' : 'Add'}
+					{busyTaskAction === 'create' ? 'Adding...' : 'Add'}
 				</button>
 			</form>
 		</section>
 
-		{#if tasks.length === 0}
-			<div transition:fade={{ duration: 200 }} class="py-12 text-center">
-				<p class="text-slate-600">No tasks yet. Add one to get started!</p>
-			</div>
-		{:else}
-			<section aria-labelledby="tasks-heading">
-				<h2 id="tasks-heading" class="sr-only">Tasks in this list</h2>
-				<p class="m-2 text-sm text-slate-500">
-					{tasks.length === 1 ? 'Task: ' : 'Tasks: '}
-					{tasks.length}
-				</p>
+		{#if taskError}
+			<p
+				role="alert"
+				class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+			>
+				{taskError}
+			</p>
+		{/if}
+
+		<section class="mb-8" aria-labelledby="tasks-heading">
+			<h2 id="tasks-heading" class="mb-4 text-lg font-bold text-slate-900">
+				Tasks <span class="text-sm font-medium text-slate-500">({tasks.length})</span>
+			</h2>
+			{#if tasks.length === 0}
+				<div transition:fade={{ duration: 200 }} class="py-12 text-center">
+					<p class="text-slate-600">No tasks yet. Add one to get started!</p>
+				</div>
+			{:else}
 				<div class="space-y-2">
 					{#each tasks as task (task.id)}
 						<div
@@ -294,32 +369,67 @@
 						>
 							<button
 								onclick={() => toggleTask(task)}
-								class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded border-2 border-slate-300 transition-colors hover:border-teal-500"
-								class:bg-teal-500={task.is_complete}
-								class:border-teal-500={task.is_complete}
-								aria-label={task.is_complete ? 'Mark incomplete' : 'Mark complete'}
+								disabled={!!busyTaskAction}
+								class={[
+									'flex h-6 w-6 flex-shrink-0 items-center justify-center rounded border-2 border-slate-300 transition-colors hover:border-teal-500 disabled:cursor-not-allowed disabled:opacity-50',
+									{ 'bg-teal-500': task.is_complete, 'border-teal-500': task.is_complete }
+								]}
+								aria-label={`${task.is_complete ? 'Mark incomplete' : 'Mark complete'}: ${task.title}`}
 							>
 								{#if task.is_complete}
 									<span class="font-bold text-white">✓</span>
 								{/if}
 							</button>
 							<span
-								class="flex-1 font-semibold text-slate-900"
-								class:line-through={task.is_complete}
-								class:text-slate-400={task.is_complete}
+								class={[
+									'flex-1 font-semibold text-slate-900',
+									{ 'line-through': task.is_complete, 'text-slate-400': task.is_complete }
+								]}
 							>
 								{task.title}
 							</span>
 							<button
 								onclick={() => deleteTask(task.id)}
-								class="px-2 py-1 text-sm font-semibold text-red-600 hover:text-red-700"
+								disabled={!!busyTaskAction}
+								aria-label={`Move ${task.title} to Removed`}
+								class="px-2 py-1 text-sm font-semibold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
 							>
-								Delete
+								{busyTaskAction === `delete:${task.id}` ? 'Removing...' : 'Remove'}
 							</button>
 						</div>
 					{/each}
 				</div>
-			</section>
-		{/if}
+			{/if}
+		</section>
+
+		<details class="mb-8" aria-busy={!!busyTaskAction}>
+			<summary class="mb-4 cursor-pointer text-lg font-bold text-slate-900">
+				Removed <span class="text-sm font-medium text-slate-500">({deletedTasks.length})</span>
+			</summary>
+			{#if deletedTasks.length === 0}
+				<p class="py-4 text-slate-600">No removed tasks.</p>
+			{:else}
+				<ul class="space-y-2">
+					{#each deletedTasks as task (task.id)}
+						<li
+							class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 transition-shadow hover:shadow-sm"
+						>
+							<span class="min-w-0 flex-1 font-semibold break-words text-slate-900"
+								>{task.title}</span
+							>
+							<button
+								type="button"
+								onclick={() => restoreTask(task)}
+								disabled={!!busyTaskAction}
+								aria-label={`Restore ${task.title}`}
+								class="px-2 py-1 text-sm font-semibold text-teal-700 hover:text-teal-800 disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								{busyTaskAction === `restore:${task.id}` ? 'Restoring...' : 'Restore'}
+							</button>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</details>
 	</main>
 </div>
