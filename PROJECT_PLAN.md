@@ -37,6 +37,7 @@ Setup and commands are in [README.md](./README.md).
 
 **Not done**
 
+- PWA (make sure mobile has icon)
 - Password reset; end-to-end test of email confirmation redirects (callback is allow-listed for ports 5173 and 3000).
 - Add icon to sign up page.
 - Add drop down menu for sign up section of the landing page.

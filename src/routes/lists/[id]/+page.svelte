@@ -25,6 +25,8 @@
 
 	let tasks: Task[] = $derived(data.tasks);
 	let deletedTasks: DeletedTask[] = $derived(data.deletedTasks);
+	let activeTasks: Task[] = $derived(tasks.filter((task) => !task.is_complete));
+	let completedTasks: Task[] = $derived(tasks.filter((task) => task.is_complete));
 	let newTaskTitle = $state('');
 	let busyTaskAction = $state('');
 	let taskError = $state('');
@@ -353,15 +355,17 @@
 
 		<section class="mb-8" aria-labelledby="tasks-heading">
 			<h2 id="tasks-heading" class="mb-4 text-lg font-bold text-slate-900">
-				Tasks <span class="text-sm font-medium text-slate-500">({tasks.length})</span>
+				Tasks <span class="text-sm font-medium text-slate-500">({activeTasks.length})</span>
 			</h2>
-			{#if tasks.length === 0}
+			{#if activeTasks.length === 0}
 				<div transition:fade={{ duration: 200 }} class="py-12 text-center">
-					<p class="text-slate-600">No tasks yet. Add one to get started!</p>
+					<p class="text-slate-600">
+						{tasks.length === 0 ? 'No tasks yet. Add one to get started!' : 'No active tasks.'}
+					</p>
 				</div>
 			{:else}
 				<div class="space-y-2">
-					{#each tasks as task (task.id)}
+					{#each activeTasks as task (task.id)}
 						<div
 							animate:flip={{ duration: 200 }}
 							transition:fly={{ y: -10, duration: 150 }}
@@ -386,6 +390,45 @@
 									{ 'line-through': task.is_complete, 'text-slate-400': task.is_complete }
 								]}
 							>
+								{task.title}
+							</span>
+							<button
+								onclick={() => deleteTask(task.id)}
+								disabled={!!busyTaskAction}
+								aria-label={`Move ${task.title} to Removed`}
+								class="px-2 py-1 text-sm font-semibold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								{busyTaskAction === `delete:${task.id}` ? 'Removing...' : 'Remove'}
+							</button>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</section>
+
+		<section class="mb-8" aria-labelledby="completed-heading">
+			<h2 id="completed-heading" class="mb-4 text-lg font-bold text-slate-900">
+				Completed <span class="text-sm font-medium text-slate-500">({completedTasks.length})</span>
+			</h2>
+			{#if completedTasks.length === 0}
+				<p class="py-4 text-slate-600">No completed tasks.</p>
+			{:else}
+				<div class="space-y-2">
+					{#each completedTasks as task (task.id)}
+						<div
+							animate:flip={{ duration: 200 }}
+							transition:fly={{ y: -10, duration: 150 }}
+							class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 transition-shadow hover:shadow-sm"
+						>
+							<button
+								onclick={() => toggleTask(task)}
+								disabled={!!busyTaskAction}
+								class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded border-2 border-teal-500 bg-teal-500 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+								aria-label={`Mark incomplete: ${task.title}`}
+							>
+								<span class="font-bold text-white">✓</span>
+							</button>
+							<span class="flex-1 font-semibold text-slate-400 line-through">
 								{task.title}
 							</span>
 							<button
