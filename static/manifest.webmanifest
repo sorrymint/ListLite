@@ -1,0 +1,17 @@
+{
+	"name": "LiteList",
+	"short_name": "LiteList",
+	"description": "Simple collaborative to-do lists",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"background_color": "#f8fafc",
+	"theme_color": "#f8fafc",
+	"icons": [
+		{
+			"src": "/icons/icon.svg",
+			"type": "image/svg+xml",
+			"sizes": "any"
+		}
+	]
+}
