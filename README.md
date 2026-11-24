@@ -1,6 +1,6 @@
 # LiteList
 
-![Logo](./static/icons/icon.svg)
+![Logo](./static/icons/icon-no-bg.svg)
 
 A demo to-do list app for [sorrymint](https://github.com/sorrymint) to learn backend as a service (BaaS).
 It is a learning project, not a template for production use.

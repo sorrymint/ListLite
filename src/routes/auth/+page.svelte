@@ -21,7 +21,7 @@
 			<p class="text-base leading-relaxed text-slate-600">
 				Sign in or create an account to keep your lists close at hand.
 			</p>
-			<img src="/icons/icon.svg" class="mx-auto h-40" alt="LiteList icon" />
+			<img src="/icons/icon-no-bg.svg" class="mx-auto h-40" alt="LiteList icon" />
 		</header>
 
 		{#if form?.error}
