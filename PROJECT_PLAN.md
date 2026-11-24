@@ -34,15 +34,23 @@ Setup and commands are in [README.md](./README.md).
 - List and task screens, and the invitation UI (create link, preview, accept, manage members).
 - Add Soft Delete for tasks. Allow users to restore deleted tasks for a limited time (e.g., 14 days) before permanent deletion.
 - Add Favicon and app icon.
+- PWA (make sure mobile has icon)
+- Add icon to sign up page.
 
 **Not done**
 
-- PWA (make sure mobile has icon)
+- Password Sign Up, Add double type in password field, and confirm password match.
+  - Allow user to show/hide password field.
 - Password reset; end-to-end test of email confirmation redirects (callback is allow-listed for ports 5173 and 3000).
-- Add icon to sign up page.
 - Add drop down menu for sign up section of the landing page.
-- Add a "delete account" button
+- Settings page.
+  - Add a "delete account" button.
 - Playwright end-to-end tests for the entire client flow.
+- Encrypt Task content in the database, so that only the client can read it. The server should not be able to read task content.
+- Add Task Body (Markdown)
+- Add Task Due Date
+- Add Task Priority
+- Star tasks
 
 ## How the backend is used
 

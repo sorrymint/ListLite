@@ -406,10 +406,10 @@
 			{/if}
 		</section>
 
-		<section class="mb-8" aria-labelledby="completed-heading">
-			<h2 id="completed-heading" class="mb-4 text-lg font-bold text-slate-900">
+		<details class="mb-8" aria-busy={!!busyTaskAction}>
+			<summary class="mb-4 cursor-pointer text-lg font-bold text-slate-900">
 				Completed <span class="text-sm font-medium text-slate-500">({completedTasks.length})</span>
-			</h2>
+			</summary>
 			{#if completedTasks.length === 0}
 				<p class="py-4 text-slate-600">No completed tasks.</p>
 			{:else}
@@ -443,7 +443,7 @@
 					{/each}
 				</div>
 			{/if}
-		</section>
+		</details>
 
 		<details class="mb-8" aria-busy={!!busyTaskAction}>
 			<summary class="mb-4 cursor-pointer text-lg font-bold text-slate-900">
