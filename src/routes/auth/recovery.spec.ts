@@ -7,7 +7,7 @@ import {
 import type { RequestEvent } from '@sveltejs/kit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { actions as forgotActions } from './forgot-password/+page.server';
-import { actions as resetActions } from './reset-password/+page.server';
+import { actions as resetActions, load as resetLoad } from './reset-password/+page.server';
 
 function event<Route extends '/auth/forgot-password' | '/auth/reset-password'>(
 	route: Route,
@@ -20,6 +20,18 @@ function event<Route extends '/auth/forgot-password' | '/auth/reset-password'>(
 		request: new Request('https://list-lite.vercel.app' + route, { method: 'POST', body: form }),
 		locals: { supabase: createClient('https://example.test', 'test-publishable-key') }
 	} as RequestEvent<Record<string, string>, Route>;
+}
+
+function loadEvent(code: string) {
+	const request = event('/auth/reset-password', {});
+	request.url.searchParams.set('code', code);
+	return {
+		...request,
+		setHeaders: vi.fn(),
+		parent: async () => ({}),
+		depends: vi.fn(),
+		untrack: <T>(fn: () => T) => fn()
+	};
 }
 
 const user = {
@@ -67,6 +79,37 @@ describe('password recovery request', () => {
 });
 
 describe('password recovery verification', () => {
+	it('exchanges the default email link code and removes it from the URL', async () => {
+		const request = loadEvent('recovery-code');
+		const exchange = vi
+			.spyOn(request.locals.supabase.auth, 'exchangeCodeForSession')
+			.mockResolvedValue({ data: { user, session }, error: null });
+		const signOut = vi.spyOn(request.locals.supabase.auth, 'signOut');
+
+		await expect(resetLoad(request)).rejects.toMatchObject({
+			status: 303,
+			location: '/auth/reset-password'
+		});
+		expect(exchange).toHaveBeenCalledWith('recovery-code');
+		expect(signOut).not.toHaveBeenCalled();
+	});
+
+	it('rejects a failed code exchange rather than using an existing session', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+		const request = loadEvent('invalid-code');
+		vi.spyOn(request.locals.supabase.auth, 'exchangeCodeForSession').mockResolvedValue({
+			data: { user: null, session: null },
+			error: new AuthError('Invalid code', 400)
+		});
+		const getUser = vi.spyOn(request.locals.supabase.auth, 'getUser');
+
+		await expect(resetLoad(request)).rejects.toMatchObject({
+			status: 400,
+			body: { message: expect.stringContaining('same browser and device') }
+		});
+		expect(getUser).not.toHaveBeenCalled();
+	});
+
 	it('verifies a recovery token and redirects without the token', async () => {
 		const request = event('/auth/reset-password', { tokenHash: 'recovery-token' });
 		const verify = vi.spyOn(request.locals.supabase.auth, 'verifyOtp').mockResolvedValue({

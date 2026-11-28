@@ -45,15 +45,16 @@ To test the task retention boundary and scheduled purge against the seeded local
 
 ### Password recovery
 
-The local Supabase configuration uses `supabase/templates/recovery.html` for reset emails. Start
-the app and local Supabase, request a reset from `/auth`, and open the email in Mailpit at
-`http://127.0.0.1:54324`. The link can be opened in a different browser or device.
+The default Supabase reset email uses PKCE: request a reset from `/auth` and open its link in the
+same browser and device. Locally, open the email in Mailpit at `http://127.0.0.1:54324`.
 
-For hosted Supabase, configure the Reset password email template to match that file and add each
-application's `/auth/reset-password` URL to the Auth redirect allowlist. Configure production SMTP
-and review Auth's email rate limits in the Supabase dashboard; local configuration does not
-automatically change hosted settings. The recovery link creates a normal authenticated session,
-which the app signs out after the password changes.
+For hosted Supabase, add each application's `/auth/reset-password` URL to the Auth redirect
+allowlist. Supabase's default email service is restricted to project team addresses and has
+low rate limits; other recipients require custom SMTP. The recovery link creates a normal
+authenticated session, which the app signs out after the password changes.
+
+The optional `supabase/templates/recovery.html` template uses a token-hash link instead, allowing
+the link to be opened in a different browser or device. Configure it explicitly if desired.
 
 ## Database
 

@@ -7,6 +7,22 @@ export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
 	const tokenHash = url.searchParams.get('token_hash');
 	if (tokenHash) return { tokenHash, hasSession: false };
 
+	const code = url.searchParams.get('code');
+	if (code) {
+		const { error: exchangeError } = await locals.supabase.auth.exchangeCodeForSession(code);
+		if (exchangeError) {
+			console.error('Supabase password recovery code exchange failed:', exchangeError);
+			if (!exchangeError.status || exchangeError.status >= 500 || exchangeError.status === 429) {
+				error(503, 'Could not verify the reset link. Please try again later.');
+			}
+			error(
+				400,
+				'Could not verify the reset link. Request a new link and open it in the same browser and device where you requested it.'
+			);
+		}
+		redirect(303, '/auth/reset-password');
+	}
+
 	const { data, error: userError } = await locals.supabase.auth.getUser();
 	if (userError && !isAuthSessionMissingError(userError)) {
 		console.error('Unable to verify the Supabase session:', userError);
