@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+
 	type ActionFeedback = {
 		error?: string;
 		message?: string;
 	} | null;
 
-	let { form }: { form: ActionFeedback } = $props();
+	let { data, form }: { data: { passwordUpdated?: boolean }; form: ActionFeedback } = $props();
 	let password = $state('');
 	let confirmPassword = $state('');
 	let showPasswords = $state(false);
@@ -57,6 +59,14 @@
 				{form.message}
 			</p>
 		{/if}
+		{#if data.passwordUpdated}
+			<p
+				class="mb-6 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm leading-relaxed text-green-900"
+				role="status"
+			>
+				Your password has been updated. You can now sign in.
+			</p>
+		{/if}
 
 		<div class="grid gap-8 sm:grid-cols-2">
 			<section aria-labelledby="sign-in-heading" class="sm:border-r sm:pr-8">
@@ -106,6 +116,12 @@
 						Sign in
 					</button>
 				</form>
+				<a
+					href={resolve('/auth/forgot-password')}
+					class="mt-4 inline-block text-sm font-semibold text-teal-700 hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+				>
+					Forgot password?
+				</a>
 			</section>
 
 			<section aria-labelledby="sign-up-heading" class="sm:pl-8">

@@ -2,7 +2,7 @@ import { isAuthSessionMissingError } from '@supabase/supabase-js';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const { data, error } = await locals.supabase.auth.getUser();
 	if (error && !isAuthSessionMissingError(error)) {
 		console.error('Unable to verify the Supabase session:', error);
@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (data.user) {
 		redirect(303, '/lists');
 	}
-	return { user: null };
+	return { user: null, passwordUpdated: url.searchParams.get('password') === 'updated' };
 };
 
 function credentials(form: FormData) {

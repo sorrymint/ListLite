@@ -43,6 +43,18 @@ npm run dev              # Starts the SvelteKit dev server
 To test the task retention boundary and scheduled purge against the seeded local database, run
 `npx supabase db query --file supabase/tests/soft_delete.sql`.
 
+### Password recovery
+
+The local Supabase configuration uses `supabase/templates/recovery.html` for reset emails. Start
+the app and local Supabase, request a reset from `/auth`, and open the email in Mailpit at
+`http://127.0.0.1:54324`. The link can be opened in a different browser or device.
+
+For hosted Supabase, configure the Reset password email template to match that file and add each
+application's `/auth/reset-password` URL to the Auth redirect allowlist. Configure production SMTP
+and review Auth's email rate limits in the Supabase dashboard; local configuration does not
+automatically change hosted settings. The recovery link creates a normal authenticated session,
+which the app signs out after the password changes.
+
 ## Database
 
 Schema changes live in `supabase/migrations`. Add a new migration file for each change; do not edit applied ones.

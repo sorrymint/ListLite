@@ -164,10 +164,14 @@ site_url = "https://list-lite.vercel.app"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = [
   "https://list-lite.vercel.app/auth/callback",
+  "https://list-lite.vercel.app/auth/reset-password",
   "http://localhost:5173/auth/callback",
+  "http://localhost:5173/auth/reset-password",
   "http://127.0.0.1:5173/auth/callback",
+  "http://127.0.0.1:5173/auth/reset-password",
   "https://127.0.0.1:3000",
-  "http://127.0.0.1:3000/auth/callback"
+  "http://127.0.0.1:3000/auth/callback",
+  "http://127.0.0.1:3000/auth/reset-password"
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
@@ -256,6 +260,10 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 # Uncomment to customize email template
+[auth.email.template.recovery]
+subject = "Reset your password"
+content_path = "./supabase/templates/recovery.html"
+
 # [auth.email.template.invite]
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
