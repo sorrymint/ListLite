@@ -3,7 +3,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
-	setHeaders({ 'Referrer-Policy': 'no-referrer' });
+	setHeaders({ 'Referrer-Policy': 'strict-origin' });
 	const tokenHash = url.searchParams.get('token_hash');
 	if (tokenHash) return { tokenHash, hasSession: false };
 

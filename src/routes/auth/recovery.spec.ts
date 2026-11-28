@@ -79,6 +79,14 @@ describe('password recovery request', () => {
 });
 
 describe('password recovery verification', () => {
+	it('protects recovery URLs without suppressing the origin of form submissions', async () => {
+		const request = loadEvent('');
+		request.url.searchParams.set('token_hash', 'recovery-token');
+
+		await expect(resetLoad(request)).resolves.toMatchObject({ tokenHash: 'recovery-token' });
+		expect(request.setHeaders).toHaveBeenCalledWith({ 'Referrer-Policy': 'strict-origin' });
+	});
+
 	it('exchanges the default email link code and removes it from the URL', async () => {
 		const request = loadEvent('recovery-code');
 		const exchange = vi
