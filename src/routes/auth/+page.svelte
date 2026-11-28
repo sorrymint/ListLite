@@ -5,6 +5,23 @@
 	} | null;
 
 	let { form }: { form: ActionFeedback } = $props();
+	let password = $state('');
+	let confirmPassword = $state('');
+	let showPasswords = $state(false);
+	let showPasswordMismatch = $state(false);
+	let passwordMismatch = $derived(
+		showPasswordMismatch &&
+			password !== '' &&
+			confirmPassword !== '' &&
+			password !== confirmPassword
+	);
+
+	function validateSignUp(event: SubmitEvent) {
+		if (password !== confirmPassword) {
+			event.preventDefault();
+			showPasswordMismatch = true;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -62,14 +79,25 @@
 						<label for="sign-in-password" class="mb-2 block text-sm font-semibold text-slate-900">
 							Password
 						</label>
-						<input
-							id="sign-in-password"
-							name="password"
-							type="password"
-							autocomplete="current-password"
-							required
-							class="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
-						/>
+						<div class="flex gap-2">
+							<input
+								id="sign-in-password"
+								name="password"
+								type={showPasswords ? 'text' : 'password'}
+								autocomplete="current-password"
+								required
+								class="min-h-11 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+							/>
+							<button
+								type="button"
+								aria-controls="sign-in-password sign-up-password sign-up-confirm-password"
+								aria-label={showPasswords ? 'Hide all passwords' : 'Show all passwords'}
+								onclick={() => (showPasswords = !showPasswords)}
+								class="min-h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-teal-700 hover:bg-slate-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+							>
+								{showPasswords ? 'Hide' : 'Show'}
+							</button>
+						</div>
 					</div>
 					<button
 						type="submit"
@@ -82,7 +110,7 @@
 
 			<section aria-labelledby="sign-up-heading" class="sm:pl-8">
 				<h2 id="sign-up-heading" class="mb-6 text-lg font-bold text-slate-900">Create account</h2>
-				<form method="POST" action="?/signUp" class="space-y-5">
+				<form method="POST" action="?/signUp" class="space-y-5" onsubmit={validateSignUp}>
 					<div>
 						<label
 							for="sign-up-display-name"
@@ -117,14 +145,61 @@
 						<label for="sign-up-password" class="mb-2 block text-sm font-semibold text-slate-900">
 							Password
 						</label>
-						<input
-							id="sign-up-password"
-							name="password"
-							type="password"
-							autocomplete="new-password"
-							required
-							class="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
-						/>
+						<div class="flex gap-2">
+							<input
+								id="sign-up-password"
+								name="password"
+								type={showPasswords ? 'text' : 'password'}
+								autocomplete="new-password"
+								bind:value={password}
+								required
+								class="min-h-11 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+							/>
+							<button
+								type="button"
+								aria-controls="sign-in-password sign-up-password sign-up-confirm-password"
+								aria-label={showPasswords ? 'Hide all passwords' : 'Show all passwords'}
+								onclick={() => (showPasswords = !showPasswords)}
+								class="min-h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-teal-700 hover:bg-slate-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+							>
+								{showPasswords ? 'Hide' : 'Show'}
+							</button>
+						</div>
+					</div>
+					<div>
+						<label
+							for="sign-up-confirm-password"
+							class="mb-2 block text-sm font-semibold text-slate-900"
+						>
+							Confirm password
+						</label>
+						<div class="flex gap-2">
+							<input
+								id="sign-up-confirm-password"
+								type={showPasswords ? 'text' : 'password'}
+								autocomplete="new-password"
+								bind:value={confirmPassword}
+								onblur={() => (showPasswordMismatch = true)}
+								aria-invalid={passwordMismatch}
+								aria-describedby={passwordMismatch ? 'password-mismatch' : undefined}
+								required
+								class="min-h-11 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+							/>
+							<button
+								type="button"
+								aria-controls="sign-in-password sign-up-password sign-up-confirm-password"
+								aria-label={showPasswords ? 'Hide all passwords' : 'Show all passwords'}
+								onclick={() => (showPasswords = !showPasswords)}
+								class="min-h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-teal-700 hover:bg-slate-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+							>
+								{showPasswords ? 'Hide' : 'Show'}
+							</button>
+						</div>
+						{#if passwordMismatch}
+							<p id="password-mismatch" class="mt-2 text-sm text-red-900" role="alert">
+								Passwords do not match.
+							</p>
+						{/if}
 					</div>
 					<button
 						type="submit"

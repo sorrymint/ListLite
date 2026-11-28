@@ -36,11 +36,11 @@ Setup and commands are in [README.md](./README.md).
 - Add Favicon and app icon.
 - PWA (make sure mobile has icon)
 - Add icon to sign up page.
+- Password Sign Up, Add double type in password field, and confirm password match.
+  - Allow user to show/hide password field.
 
 **Not done**
 
-- Password Sign Up, Add double type in password field, and confirm password match.
-  - Allow user to show/hide password field.
 - Password reset; end-to-end test of email confirmation redirects (callback is allow-listed for ports 5173 and 3000).
 - Add drop down menu for sign up section of the landing page.
 - Settings page.
